@@ -10,9 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout репозитория frontend
-      - name: Checkout repo
+      # 1. Checkout РЕПОЗИТОРИЯ FRONTEND
+      - name: Checkout frontend repo
         uses: actions/checkout@v3
+        with:
+          repository: marchitecht/frontend
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: frontend
 
       # 2. Логин в GHCR
       - name: Log in to GHCR
@@ -22,12 +26,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Сборка Docker-образа (Dockerfile в корне)
+      # 3. Сборка Docker-образа из frontend/
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/marchitecht/frontend:latest .
+          docker build \
+            -t ghcr.io/marchitecht/frontend:latest \
+            frontend
 
-      # 4. Push образа в GHCR
+      # 4. Push образа
       - name: Push Docker image
         run: |
           docker push ghcr.io/marchitecht/frontend:latest
