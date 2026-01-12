@@ -50,11 +50,15 @@ jobs:
           port: 22
           script: |
             cd /root/devstack
-            # Логинимся в GHCR на сервере напрямую через GitHub логин
+
+            # Логинимся в GHCR
             echo "${GHCR_PAT}" | docker login ghcr.io -u marchitecht --password-stdin
-            # Подтягиваем свежий образ фронта
+
+            # Обновляем Docker-образ фронтенда
             docker-compose pull frontend
-            # Запускаем контейнер
             docker-compose up -d frontend
+
+            # Перезапускаем Nginx, чтобы подхватил новые файлы фронтенда
+            sudo nginx -s reload
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
