@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout devstack (текущий репо)
-      - name: Checkout devstack repo
+      # 1. Checkout devstack repo
+      - name: Checkout devstack
         uses: actions/checkout@v3
 
       # 2. Checkout frontend repo
-      - name: Checkout frontend repo
+      - name: Checkout frontend
         uses: actions/checkout@v3
         with:
           repository: marchitecht/frontend
           token: ${{ secrets.GITHUB_TOKEN }}
           path: frontend
 
-      # 3. Логин в GHCR через PAT для сборки локально
+      # 3. Логин в GHCR для сборки локально
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
@@ -33,9 +33,7 @@ jobs:
       # 4. Сборка Docker-образа фронта
       - name: Build Docker image
         run: |
-          docker build \
-            -t ghcr.io/marchitecht/frontend:latest \
-            frontend
+          docker build -t ghcr.io/marchitecht/frontend:latest frontend
 
       # 5. Push Docker-образа в GHCR
       - name: Push Docker image
@@ -52,7 +50,10 @@ jobs:
           port: 22
           script: |
             cd /root/devstack
-            # Логинимся в GHCR на сервере для pull приватного образа
+            # Логинимся в GHCR на сервере через переданные секреты
             echo $GHCR_PAT | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
             docker-compose pull frontend
             docker-compose up -d frontend
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
