@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Клонируем devstack
+      # 1. Checkout devstack repo
       - name: Checkout devstack
         uses: actions/checkout@v3
 
-      # 2. Клонируем frontend в папку frontend
+      # 2. Checkout frontend repo
       - name: Checkout frontend
         uses: actions/checkout@v3
         with:
@@ -22,25 +22,25 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: frontend
 
-      # 3. Логинимся в GHCR для сборки и пуша
+      # 3. Log in to GHCR to push image
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: marchitecht
           password: ${{ secrets.GHCR_PAT }}
 
-      # 4. Строим Docker образ фронта
+      # 4. Build Docker image for frontend
       - name: Build Docker image
         run: |
           docker build -t ghcr.io/marchitecht/frontend:latest frontend
 
-      # 5. Пушим Docker образ в GHCR
+      # 5. Push Docker image to GHCR
       - name: Push Docker image
         run: |
           docker push ghcr.io/marchitecht/frontend:latest
 
-      # 6. Деплой на сервер через SSH
+      # 6. Deploy to server via SSH
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -50,12 +50,11 @@ jobs:
           port: 22
           script: |
             cd /root/devstack
-            # Правильный login в GHCR на сервере через переданные секреты
-            echo "${GHCR_PAT}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+            # Логинимся в GHCR на сервере напрямую через GitHub логин
+            echo "${GHCR_PAT}" | docker login ghcr.io -u marchitecht --password-stdin
             # Подтягиваем свежий образ фронта
             docker-compose pull frontend
             # Запускаем контейнер
             docker-compose up -d frontend
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
