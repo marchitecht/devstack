@@ -22,20 +22,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Сборка Docker-образа (ЯВНО указываем Dockerfile и контекст)
+      # 3. Сборка Docker-образа (Dockerfile в корне)
       - name: Build Docker image
         run: |
-          docker build \
-            -f frontend/Dockerfile \
-            -t ghcr.io/marchitecht/frontend:latest \
-            frontend
+          docker build -t ghcr.io/marchitecht/frontend:latest .
 
       # 4. Push образа в GHCR
       - name: Push Docker image
         run: |
           docker push ghcr.io/marchitecht/frontend:latest
 
-      # 5. Деплой на сервере
+      # 5. Деплой на сервер
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
         with:
