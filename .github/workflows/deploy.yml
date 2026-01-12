@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Клонируем репо фронта
+      # 1. Checkout репозитория frontend
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # 2. Логинимся в GitHub Container Registry
+      # 2. Логин в GHCR
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
@@ -22,17 +22,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Строим образ фронта
+      # 3. Сборка Docker-образа (ЯВНО указываем Dockerfile и контекст)
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/marchitecht/frontend:latest .
+          docker build \
+            -f frontend/Dockerfile \
+            -t ghcr.io/marchitecht/frontend:latest \
+            frontend
 
-      # 4. Пушим образ в GHCR
+      # 4. Push образа в GHCR
       - name: Push Docker image
         run: |
           docker push ghcr.io/marchitecht/frontend:latest
 
-      # 5. SSH на сервер и обновляем контейнер через docker-compose
+      # 5. Деплой на сервере
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -42,6 +45,5 @@ jobs:
           port: 22
           script: |
             cd /root/devstack
-            git pull origin main
             docker-compose pull frontend
             docker-compose up -d frontend
